@@ -10,21 +10,35 @@ const app = (data) => {
   console.log('data', data)
 
   const tempData = data.monthlyVariance
-  console.log('tempData', tempData, tempData.length)
+  const baseTemp = data.baseTemperature
+
+  console.log(baseTemp)
 
   const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  console.log(month)
 
-  const colors = ['#225ea8', '#41b6c4', '#a1dab4', '#ffffb2', '#fecc5c', '#fd8d3c', '#e31a1c']
+  const colors = ['#5e4fa2',
+    '#3288bd',
+    '#66c2a5',
+    '#abdda4',
+    '#e6f598',
+    '#ffffbf',
+    '#fee08b',
+    '#fdae61',
+    '#f46d43',
+    '#d53e4f',
+    '#9e0142']
 
-  const colorScale = d3.scaleQuantize()
+  const colorScale = d3.scaleQuantile()
     .domain([
-      d3.min(tempData, d => d.variance),
-      d3.max(tempData, d => d.variance)
+      d3.min(tempData, d => d.variance + baseTemp),
+      d3.max(tempData, d => d.variance + baseTemp)
     ])
     .range(colors)
 
-  // create dimensions
+  const colorRange = [0].concat(colorScale.quantiles())
+  console.log('color range', colorRange)
+
+  // create chart dimensions
   const w = 1100
   const h = 600
   const padding = 100
@@ -38,8 +52,27 @@ const app = (data) => {
     .attr('height', h)
     .attr('class', 'chart')
 
+    // legend
+  const legendRectSize = 20
+  const legendSpacing = 2
+
+  const legend = svg.selectAll('.legend')
+    .data(colorRange)
+    .enter()
+    .append('g')
+    .attr('class', 'legend')
+
+  legend.append('rect')
+    .attr('x', (d, i) => {
+      return legendRectSize * i + (w - padding - legendRectSize * colors.length)
+    })
+    .attr('y', h - padding + 50)
+    .attr('width', legendRectSize)
+    .attr('height', rectHeight / 2)
+    .style('fill', (d, i) => colors[i])
+
   // x scale and axis
-  // Need to convert to date objects to use scaleTime()
+  // need to convert to date objects to use scaleTime()
   const minYear = new Date(d3.min(tempData, (d) => d.year), 0)
   const maxYear = new Date(d3.max(tempData, (d) => d.year), 0)
 
@@ -60,7 +93,7 @@ const app = (data) => {
     .attr('class', 'chart-label')
     .text('Year')
 
-    // y scale and axis
+  // y scale and axis
   const minMonth = d3.min(tempData, (d) => d.month)
   const maxMonth = d3.max(tempData, (d) => d.month)
 
@@ -72,6 +105,7 @@ const app = (data) => {
 
   svg.append('g')
     .attr('transform', `translate(${padding}, 0)`)
+    .attr('class', 'yAxis')
     .call(yAxis)
 
   svg.append('text')
@@ -79,6 +113,11 @@ const app = (data) => {
     .attr('transform', `translate(${padding / 2}, ${h / 2})rotate(-90)`)
     .attr('class', 'chart-label')
     .text('Month')
+
+  // tooltip
+  const tooltip = d3.select('body').append('div')
+    .attr('class', 'tooltip')
+    .style('opacity', 0)
 
   // plot the data
   svg.selectAll('rect')
@@ -92,7 +131,25 @@ const app = (data) => {
     .attr('variance', d => (d.variance)) // TODO: Remove
     .attr('width', rectWidth)
     .attr('height', rectHeight)
-    .attr('fill', d => colorScale(d.variance))
+    .attr('fill', d => colorScale(d.variance + baseTemp))
+    .on('mouseover', (d) => {
+      tooltip
+        .transition()
+        .style('opacity', 1)
+      tooltip
+        .html(`
+          <div><b>${month[month.length - d.month]} - ${d.year}</b></div>
+          <div>${(d.variance + baseTemp).toFixed(2)}&deg;C</div>
+          `)
+        .style('left', xScale(new Date(d.year, 0)) + 20 + 'px')
+        /* must go here instead of above because the transition affects the styling */
+        .style('top', (d.month - 1) * rectHeight + padding - 20 + 'px')
+    })
+    .on('mouseout', () => {
+      tooltip
+        .transition()
+        .style('opacity', 0)
+    })
 }
 
 // fetch data
