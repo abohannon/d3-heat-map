@@ -52,9 +52,18 @@ const app = (data) => {
     .attr('height', h)
     .attr('class', 'chart')
 
-    // legend
-  const legendRectSize = 20
-  const legendSpacing = 2
+  // chart title
+  svg.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('x', w / 2)
+    .attr('y', padding - 20)
+    .style('font-weight', 900)
+    .style('font-size', '1.5rem')
+    .text(`Global Land-Surface Temperature,
+1753 - 2015`)
+
+  // legend
+  const legendRectSize = 30
 
   const legend = svg.selectAll('.legend')
     .data(colorRange)
@@ -70,6 +79,14 @@ const app = (data) => {
     .attr('width', legendRectSize)
     .attr('height', rectHeight / 2)
     .style('fill', (d, i) => colors[i])
+
+  legend.append('text')
+    .attr('x', (d, i) => {
+      return legendRectSize * i + (w - padding - legendRectSize * colors.length) + 3
+    })
+    .attr('y', h - padding + 80)
+    .style('font-size', 11)
+    .text(d => d.toFixed(1))
 
   // x scale and axis
   // need to convert to date objects to use scaleTime()
@@ -110,7 +127,7 @@ const app = (data) => {
 
   svg.append('text')
     .attr('text-anchor', 'middle')
-    .attr('transform', `translate(${padding / 2}, ${h / 2})rotate(-90)`)
+    .attr('transform', `translate(${padding / 2 - 10}, ${h / 2})rotate(-90)`)
     .attr('class', 'chart-label')
     .text('Month')
 
