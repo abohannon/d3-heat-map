@@ -7,12 +7,9 @@ const app = (data) => {
   if (!data) {
     console.log('Loading...')
   }
-  console.log('data', data)
 
   const tempData = data.monthlyVariance
   const baseTemp = data.baseTemperature
-
-  console.log(baseTemp)
 
   const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -36,7 +33,6 @@ const app = (data) => {
     .range(colors)
 
   const colorRange = [0].concat(colorScale.quantiles())
-  console.log('color range', colorRange)
 
   // create chart dimensions
   const w = 1100
@@ -44,7 +40,6 @@ const app = (data) => {
   const padding = 100
   const rectWidth = tempData.length / w
   const rectHeight = (h - padding * 2) / month.length
-  console.log('gridWidth', rectWidth)
 
   // create svg canvas
   const svg = d3.select('svg')
@@ -56,7 +51,7 @@ const app = (data) => {
   svg.append('text')
     .attr('text-anchor', 'middle')
     .attr('x', w / 2)
-    .attr('y', padding - 20)
+    .attr('y', padding - 40)
     .style('font-weight', 900)
     .style('font-size', '1.5rem')
     .text(`Global Land-Surface Temperature,
@@ -137,15 +132,13 @@ const app = (data) => {
     .style('opacity', 0)
 
   // plot the data
-  svg.selectAll('rect')
+  const temps = svg.selectAll('rect')
     .data(tempData)
-    .enter()
+
+  temps.enter()
     .append('rect')
     .attr('x', (d, i) => xScale(new Date(d.year, 0)))
     .attr('y', (d, i) => (d.month - 1) * rectHeight + padding)
-    .attr('year', d => (d.year)) // TODO: Remove
-    .attr('month', d => (d.month)) // TODO: Remove
-    .attr('variance', d => (d.variance)) // TODO: Remove
     .attr('width', rectWidth)
     .attr('height', rectHeight)
     .attr('fill', d => colorScale(d.variance + baseTemp))
